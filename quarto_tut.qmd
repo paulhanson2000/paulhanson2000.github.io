@@ -1,0 +1,36 @@
+---
+format: html
+toc: true
+---
+
+# Download
+Download Quarto from [here](https://quarto.org/docs/get-started/). Follow the instructions to install, and now you should be able to type "quarto render myfile.qmd" to render your files.\
+You can also type "quarto preview myfile.qmd", which will render the document, open it in a browser for preview, and automatically update whenever you make changes!
+
+# Intro to Quarto
+Every file begins with a YAML header (YAML is "Yet Another Markup Language"), and is followed by R, Python, Bash, or OJS code blocks.\
+Between code blocks, you can write in Markdown-formatted text, like this text right now! ([Markdown guide](https://quarto.org/docs/authoring/markdown-basics.html))\
+[The "format:" argument specifies how to rener your code document. It can be HTML (required for interactive stuff), PDF, or a [variety of other formats](https://quarto.org/docs/output-formats/all-formats.html)]{.aside}
+
+::: {.cell}
+---
+title: Example Interactive Plots with Observable JS
+format: html
+---
+
+```{r}
+print("Hello from R")
+```
+
+```{python}
+print("Hello from Python")
+```
+
+```{bash}
+echo "Hello from Bash"
+```
+
+```{ojs}
+"Hello from Observable JS"
+```
+:::

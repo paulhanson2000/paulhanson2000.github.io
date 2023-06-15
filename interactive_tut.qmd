@@ -1,0 +1,107 @@
+---
+title: Interactive OJS Plots
+format: html
+execute:
+  echo: fenced
+toc: true
+---
+
+```{r}
+#| include: false
+library(data.table)
+```
+
+# Pass variables from R to OJS
+```{r}
+x <- rnorm(100)
+y <- rexp(100)
+a <- rep_len(letters,100)
+dt <- data.table(x,y,a) # data.frame / matrix also work fine
+names(dt) <- c("RX", "RY", "RLabels")
+rg <- 1:100
+
+ojs_define(x_from_r = x,
+           y_from_r = y,
+           dt_from_r = dt,
+           range_from_r = rg)
+```
+Variables passed to `ojs_define()` will now be available in `{ojs}` code blocks!
+
+# Buttons/Inputs
+All these variables: checkbox, toggle, radio... can now be in later `{ojs}` code blocks, and things (even plots) will update reactively if they change! \
+For example, by using the syntax `${...}` directly in this markdown text, the following text will change before your very eyes if you press the "Toggle" button below: ${toggle}
+```{ojs}
+//| code-fold: false
+viewof checkbox = Inputs.checkbox(["Box1","Box2","Box3","Box4"],   {label: "Checkboxes"})
+viewof toggle     = Inputs.toggle(                                 {label: "Toggle"})
+viewof radio      = Inputs.radio (["Radio1", "Radio2", "Radio3"],  {label: "Radio Buttons"})
+viewof slider     = Inputs.range ([0, 100],                        {label: "Slider"})
+viewof int_slider = Inputs.range (range_from_r,           {step: 1, label: "Slider (int)"})
+viewof found_nums = Inputs.search(range_from_r,                    {label: "Search numbers 1-100"})
+viewof found_lets = Inputs.search(["A", "B"],                      {label: "Search \"A\" or \"B\""})
+viewof select1    = Inputs.select(["Sel1", "Sel2", "Sel3"],        {label: "Dropdown list"})
+viewof selectn    = Inputs.select(["Small", "Medium", "Large"],    {label: "Select multiple", multiple: true})
+viewof text       = Inputs.text  (                                 {label: "Text", placeholder: "This text appears if box empty"})
+viewof file       = Inputs.file  (                                 {label: "File"})
+viewof date       = Inputs.date  (                                 {label: "Date"})
+```
+See [here](https://github.com/observablehq/inputs/blob/main/README.md) for a definitive list of input options.
+
+# Plots
+`Plot.plot({...})` is like making a blank canvas. \
+Then, you apply `marks: [...]` to it (dots (`Plot.dot()`), lines (`Plot.lineY()`), etc.). You can overlay multiple marks! \
+Below are examples of the simplest code possible for each type of plot. Guides detailing more customization options are linked.\
+
+**IMPORTANT NOTE**: data from R must be `transpose()`'d in OJS before the plot can recognize it. Just an unfortunate quirk. \
+
+<details><summary>Scatterplot</summary><blockquote>
+<h2>Scatterplot</h2>
+See [here](https://observablehq.com/plot/marks/dot) for more scatterplot examples and options.
+```{ojs}
+Plot.plot({ marks: [
+  Plot.dot( transpose(dt_from_r), {
+    x: "RX", // Column name given in R
+    y: "RY"
+  })
+]})
+
+// Since we are only using one mark, you could also just call it directly:
+// Plot.dot(transpose(dt_from_r), { x: "RX", y: "RY" })
+```
+</blockquote></details>
+
+<details><summary>Lineplot</summary><blockquote>
+<h2>Lineplot</h2>
+
+```{ojs}
+Plot.plot({ marks: [
+  Plot.lineY( transpose(dt_from_r), {
+    x: range_from_r,
+    y: "RY"
+  })
+]})
+
+// Again, in this case we could have just written:
+// Plot.lineY(transpose(dt_from_r), { x: range_from_r, y: "RY" })
+```
+</blockquote></details>
+
+<details><summary>Scatter + Lines</summary><blockquote>
+<h2>Scatter + Lines</h2>
+```{ojs}
+Plot.plot({ marks: [
+  Plot.dot( transpose(dt_from_r), {
+    x: "RX",
+    y: "RY"
+  }), // Remember to put commas! Common bug.
+  Plot.lineY( transpose(dt_from_r), {
+    x: range_from_r,
+    y: "RY"
+  }),
+]})
+```
+</blockquote></details>
+
+The above should give a good foundation.\
+If this is good enough for you and you are more interested in the different _types_ of plots (dot, line, bar, box-and-whisker, heatmap...), see [this gallery](https://observablehq.com/@observablehq/plot-gallery), there's too many to show here!\
+If you are interested in adding fancy features to plots, like colors, or even tooltips on hover, see [here](https://observablehq.com/plot/features/plots).
