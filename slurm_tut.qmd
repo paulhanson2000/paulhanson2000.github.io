@@ -66,6 +66,13 @@ sbatch job_script2.sh
 ```
 
 # Conclusion
+To view your currently running jobs, type:
+```{bash, filename="Command Line"}
+#| eval: false
+squeue -u <your_username>
+# E.g. my username is phanso1
+```
+
 That is all  you should need for most uses! If you want to do advanced things such as submit many small jobs at once, or take advantage of parallelization, or use GPUs, check out the [full documentation](https://docs.alliancecan.ca/wiki/Running_jobs).\
 There is also an R package called [`slurmR`](https://cran.r-project.org/web/packages/slurmR/index.html) that lets you submit jobs from R! I have not tried it yet.
 

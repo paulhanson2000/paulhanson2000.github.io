@@ -177,6 +177,16 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 <section id="conclusion" class="level1">
 <h1>Conclusion</h1>
+<p>To view your currently running jobs, type:</p>
+<div class="cell">
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+<pre><strong>Command Line</strong></pre>
+</div>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="ex">squeue</span> <span class="at">-u</span> <span class="op">&lt;</span>your_username<span class="op">&gt;</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="co"># E.g. my username is phanso1</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
 <p>That is all you should need for most uses! If you want to do advanced things such as submit many small jobs at once, or take advantage of parallelization, or use GPUs, check out the <a href="https://docs.alliancecan.ca/wiki/Running_jobs">full documentation</a>.<br>
 There is also an R package called <a href="https://cran.r-project.org/web/packages/slurmR/index.html"><code>slurmR</code></a> that lets you submit jobs from R! I have not tried it yet.</p>
 <details>
