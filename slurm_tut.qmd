@@ -1,0 +1,74 @@
+---
+title: Slurm
+format: html
+---
+
+Here is how I use Slurm to submit jobs.\
+
+I have R or python scripts I want to run:
+```{r, filename="r_thing.R"}
+#| eval: false
+result <- mean(rnorm(n=100, mean=0, sd=1))
+
+print(paste("Hello from R! Result:", result))
+write(result, "r_output_file.txt")
+```
+```{python, filename="py_thing.py"}
+#| eval: false
+import numpy as np
+result = np.mean(np.random.normal(size=100, loc=0, scale=1))
+
+print(f"Hello from Python! Result: {result}")
+with open("py_output_file.txt", "w") as f: f.write(str(result))
+```
+
+I make a shell script describing what I want to run:
+```{bash, filename="job_script.sh"}
+#| eval: false
+#!/bin/bash
+
+# Load any required modules
+module load r/4.2.2
+module load python/3.11.2
+
+# Run stuff
+Rscript r_thing.R
+python py_thing.py
+```
+
+Then I submit the job to run with 4 CPUs with 4G memory each, and I expect it to take 2 hours or less.
+```{bash, filename="Command Line"}
+#| eval: false
+sbatch --time=2:00:00 --ntasks=4 --mem-per-cpu=4G job_script.sh
+```
+When the job runs, it will make a file called `slurm-<PROCESS_ID>.out`. Inside you will find errors or anything else your scripts print while running. For example, in this case we would find `Hello from R! Result: <number>` and `Hello from Python! Result: <number>` inside.
+
+---
+
+Alternatively, I could have added special `#SBATCH` comments at the top of my job script, and then I wouldn't have to type those command line options every time.\
+
+```{bash, filename="job_script2.sh"}
+#| eval: false
+#!/bin/bash
+#SBATCH --time=2:00:00
+#SBATCH --ntasks=4
+#SBATCH --mem-per-cpu=4G
+
+module load r/4.2.2
+module load python/3.11.2
+
+Rscript r_thing.R
+python py_thing.py
+```
+```{bash, filename="Command Line"}
+#| eval: false
+sbatch job_script2.sh
+```
+
+# Conclusion
+That is all  you should need for most uses! If you want to do advanced things such as submit many small jobs at once, or take advantage of parallelization, or use GPUs, check out the [full documentation](https://docs.alliancecan.ca/wiki/Running_jobs).\
+There is also an R package called [`slurmR`](https://cran.r-project.org/web/packages/slurmR/index.html) that lets you submit jobs from R! I have not tried it yet.
+
+<details><summary>In case of this error...</summary><blockquote>
+P.S. if you receive the following error: `You are associated with multiple _cpu allocations...`, then that means you are part of multiple PI's groups, and you need to specify whose computing resources you want to use. Just add `#SBATCH --account=def-jdupui19` to your job script for example.
+</blockquote></details>
