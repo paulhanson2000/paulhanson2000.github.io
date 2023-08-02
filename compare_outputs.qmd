@@ -1,0 +1,170 @@
+---
+format: html
+toc: true
+---
+
+# Lib
+```{r}
+library(data.table)
+library(quarto)
+```
+
+```{r}
+#| include: false
+"%ni%" <- Negate("%in%")
+```
+
+# Load Results
+## MAHAJAN 2022 Paper
+TODO: comparing against Mahajan results hardcoded for this particular project, maybe remove this codeblock eventually because the rest of the code is otherwise general.\
+Also loading `tmp` is a slowdown... smarter way of translating chrposIDs -> rsids?
+```{r}
+#| cache: true 
+loci_configs <- fread("config.loci")
+result_files <- paste0("../data/DIAMANTE2022/fine_mapping/", list.files("../data/DIAMANTE2022/fine_mapping/", pattern="finemap."))
+result_files <- sapply(loci_configs$locus, simplify=F, function(l) grep(l, result_files, value=T)) # NOTE: one locus can have multiple credset files.
+
+# Read all credset files per locus. List of list of datatables.
+mahajan_results <- sapply(loci_configs$locus, simplify=F, function(l)
+                   sapply(result_files[[l]], simplify=F, function(f)
+                     fread(f, select=c(      "ID","POST"), # Have to translate to rsids :(
+                           col.names=c("chrposID","pip" ))
+                   ))
+
+mahajan_results <- lapply(mahajan_results, do.call, what=rbind) # Merge so just one datatable per locus.
+mahajan_results <- lapply(mahajan_results, '[', i=order(-pip), j=.SD[1], by=chrposID) # IDs may be duplicated if there were multiple credible set files. Take only max PIP per ID.
+
+# Translate chrposID -> risd
+sumstat_ids <- lapply(c("../data/DIAMANTE2022/sumstat/DIAMANTE-EAS.sumstat.txt",
+                        "../data/DIAMANTE2022/sumstat/DIAMANTE-EUR.sumstat.txt",
+                        "../data/DIAMANTE2022/sumstat/DIAMANTE-SAS.sumstat.txt"),
+                      fread, select=c("rsID","chrposID")                        )
+sumstat_ids <- do.call(rbind, sumstat_ids)
+sumstat_ids <- unique(sumstat_ids, by="rsID")
+
+all_ids_in_credsets <- Reduce(union, lapply(mahajan_results,'[',j=chrposID))
+sumstat_ids <- sumstat_ids[ chrposID %in% all_ids_in_credsets ] # Optimization, a bit of pre-filtering
+all(all_ids_in_credsets %in% sumstat_ids$chrposID) # Hopefully true!
+rm(all_ids_in_credsets)
+
+mahajan_results <- lapply(mahajan_results, function(mr) {
+  mr <- merge(x=mr, y=sumstat_ids, by="chrposID")
+  mr <- mr[, .(rsID,pip)] # Can toss chrposID now
+  setnames(mr, old=c("rsID"), new="rsid")
+})
+```
+
+## PAINTOR
+```{r}
+#| cache: false
+result_files <- paste0("out/paintor/", list.files("out/paintor/", pattern=".results"))
+result_files <- result_files[!grepl("LogFile", result_files)]
+paintor_results <- lapply(result_files, fread, select=c("rsid", "Posterior_Prob"),
+                                             col.names=c("rsid",       "pip"     ))
+names(paintor_results) <- sub("out/paintor/(.*).results", "\\1", result_files)
+```
+## SuSiEx
+```{r}
+#| cache: false
+result_files <- paste0("out/susiex/", list.files("out/susiex/", pattern=".snp")) 
+susiex_results <- lapply(result_files, function(f) {
+  header <- fread(f, nrow=1, header=F)
+  pip_colnames <- unname(grep("PIP", header, value=T))
+  if(length(pip_colnames)==0) return( fread(f, select="SNP", col.names="rsid")[,pip := 0] )
+
+  susiex_result <- fread(f, select=c("SNP", pip_colnames))
+  susiex_result <- susiex_result[, .SDcols = pip_colnames, pip := max(.SD), by=1:nrow(susiex_result)]
+  susiex_result <- susiex_result[, (pip_colnames) := NULL]
+  setnames(susiex_result, old="SNP", new="rsid")
+})
+names(susiex_results) <- sub("out/susiex/(.*).snp", "\\1", result_files)
+```
+
+# Prep Results for JS
+```{r}
+resultss <- list(Mahajan = mahajan_results,
+                 PAINTOR = paintor_results,
+                 SuSiEx  =  susiex_results)
+
+resultss <- sapply(loci_configs$locus, simplify=F, function(l) {
+  locus_rsids_union <- Reduce(union, lapply(resultss, function(results) results[[l]]$rsid))
+  lapply(resultss, function(results) {
+    method_missing_rsids <- locus_rsids_union[locus_rsids_union %ni% results[[l]]$rsid]
+    if(length(method_missing_rsids)==0)
+      tmp <- results[[l]]
+    else
+      tmp <- rbind(results[[l]], data.table(rsid = method_missing_rsids, pip = 0))
+    setorder(tmp, rsid)
+  })
+}) # Returns resultss[locus][method]
+resultss <- purrr::transpose(resultss) # Turn back to resultss[method][locus]
+
+mahajan_pips <- lapply(resultss$Mahajan, '[', j=pip)
+paintor_pips <- lapply(resultss$PAINTOR, '[', j=pip)
+susiex_pips  <- lapply(resultss$SuSiEx,  '[', j=pip)
+
+ojs_define(mahajan_pips = mahajan_pips,
+           paintor_pips = paintor_pips,
+           susiex_pips = susiex_pips)
+```
+
+[Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam...]{.aside}
+
+::: {.column-margin}
+Fancy math:
+$$\frac{d}{dx}\left( \int_{a}^{x} f(u)\,du\right)=f(x).$$
+:::
+
+[Random plot:]{.aside}
+```{r}
+#| echo: false
+#| column: margin
+plot(rnorm(100),runif(100))
+```
+
+# OJS
+[I update as you change things: ${methodx} & ${methody}: ${locus}]{.aside} \
+```{ojs}
+//| code-fold: true
+viewof methodx = Inputs.radio(["Mahajan2022", "PAINTOR", "SuSiEx"], {label: "Method X", value: "Mahajan2022"})
+viewof methody = Inputs.radio(["Mahajan2022", "PAINTOR", "SuSiEx"], {label: "Method Y", value: "SuSiEx"})
+viewof locus = Inputs.select(Object.keys(susiex_pips), {label:"Locus"})
+viewof xslider = Inputs.range([0,1], {label: "X slider", value: 1})
+max_x = Math.pow(xslider,10)
+viewof yslider = Inputs.range([0,1], {label: "Y slider", value: 1})
+max_y = Math.pow(yslider,10)
+viewof xyline = Inputs.toggle({label: "x=y line", value: true})
+viewof consistent_axes = Inputs.toggle({label: "Consistent Axes"})
+
+method_results = ({
+  Mahajan2022: mahajan_pips,
+  PAINTOR: paintor_pips,
+  SuSiEx: susiex_pips
+})
+
+plot_data = [
+  method_results[methodx][locus],
+  method_results[methody][locus]
+]
+
+//plot_data
+//plot_data[0]
+//max_x = Math.max(...plot_data[0]);
+//max_y = Math.max(...plot_data[1]);
+max_xy = Math.max(max_x, max_y);
+//max_xy
+Plot.plot({
+  width: 600, height: 600,
+  grid: true,
+  x: {label: methodx.concat(" PIPs"), domain: consistent_axes ? [0,max_xy] : [0,max_x]},
+  y: {label: methody.concat(" PIPs"), domain: consistent_axes ? [0,max_xy] : [0,max_y]},
+  marks: [
+    Plot.frame(),
+    Plot.dot(transpose(plot_data), {
+      x: (d) => d[0],
+      y: (d) => d[1]
+    }),
+    Plot.lineX(xyline ? [0,1] : [0,0], {stroke:"gray", strokeDasharray:"5 5"}),
+  ]
+});
+```
