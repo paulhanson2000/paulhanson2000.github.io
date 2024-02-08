@@ -2,9 +2,9 @@ tree -H '.' \
     -L 1 \
     --noreport \
     --dirsfirst \
-    -I "index.html" \
-    -T 'Quarto Tutorials (.html files were rendered from the .qmd)' \
+    -I "index.html|*_files" \
+    -T 'Data download for the CDSI Genomic Meta-Analysis workshop' \
     -s -D \
-    -P "*.html|*.qmd" \
+    -P "*.zip" \
     -o index.html
 
