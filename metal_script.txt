@@ -33,19 +33,13 @@ EFFECT  BETA
 STDERR  SE
 PVALUE  P
 
-# Feed in the input files. Because all their column names
-# follow the same scheme, no need to re-describe each one
-# (except to specify the sample size for each ancestry of
-#  the DIAMANTE files, because they lack an "N" column).
+# Feed in the input files. All their columns follow the
+# same naming scheme, so no need to re-describe each one.
 PROCESS data/DGI_three_regions.txt.gz
 PROCESS data/MAGIC_FUSION_Results.txt.gz
 PROCESS data/magic_SARDINIA.txt.gz
-
-DEFAULTWEIGHT 139705
 PROCESS data/DIAMANTE-EAS.txt.gz
-DEFAULTWEIGHT 251379
 PROCESS data/DIAMANTE-EUR.txt.gz
-DEFAULTWEIGHT  40737
 PROCESS data/DIAMANTE-SAS.txt.gz
 
 # Run
