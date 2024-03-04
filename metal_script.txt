@@ -35,9 +35,6 @@ PVALUE  P
 
 # Feed in the input files. All their columns follow the
 # same naming scheme, so no need to re-describe each one.
-PROCESS data/DGI_three_regions.txt.gz
-PROCESS data/MAGIC_FUSION_Results.txt.gz
-PROCESS data/magic_SARDINIA.txt.gz
 PROCESS data/DIAMANTE-EAS.txt.gz
 PROCESS data/DIAMANTE-EUR.txt.gz
 PROCESS data/DIAMANTE-SAS.txt.gz
