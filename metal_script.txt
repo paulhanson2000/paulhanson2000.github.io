@@ -3,7 +3,7 @@
 # In this case, some attempt was made to use similar trait
 # transformation and you can request a standard error based
 # analysis by uncommenting the following line:
-# SCHEME   STDERR
+SCHEME STDERR
 
 # Usually, it is a good to apply genomic control to each
 # input file. However, in this example, all the markers being
@@ -24,7 +24,9 @@
 # ADDFILTER MARKERNAME IN (rs10830963,rs563694)
 # VERBOSE ON
 
-# Describe which column names in the input refer to what.
+# For each input file, describe which column names in the input refer to what,
+# then process it.
+
 MARKER  MARKERNAME
 WEIGHT  N 
 ALLELE  EA NEA
@@ -33,11 +35,31 @@ EFFECT  BETA
 STDERR  SE
 PVALUE  P
 
-# Feed in the input files. All their columns follow the
-# same naming scheme, so no need to re-describe each one.
 PROCESS data/DIAMANTE-EAS.txt.gz
+
+MARKER  MARKERNAME
+WEIGHT  N 
+ALLELE  EA NEA
+FREQ    EAF
+EFFECT  BETA
+STDERR  SE
+PVALUE  P
+
 PROCESS data/DIAMANTE-EUR.txt.gz
+
+MARKER  MARKERNAME
+WEIGHT  N 
+ALLELE  EA NEA
+FREQ    EAF
+EFFECT  BETA
+STDERR  SE
+PVALUE  P
+
 PROCESS data/DIAMANTE-SAS.txt.gz
+
+
+# Specify output file name
+OUTFILE METAANALYSIS .TBL
 
 # Run
 ANALYZE
